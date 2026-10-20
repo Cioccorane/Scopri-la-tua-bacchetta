@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Gran Test di Ollivander: Analisi Avanzata della Bacchetta</title>
+    <style>
+        :root {
+            --magic-gold: #d4af37;
+            --magic-bronze: #cd7f32;
+            --dark-bg: #0d0f14;
+            --card-bg: #161a23;
+            --text-color: #e2e8f0;
+        }
+        body {
+            font-family: 'Cinzel', 'Georgia', serif;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .quiz-container {
+            background-color: var(--card-bg);
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            max-width: 650px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: var(--magic-gold);
+            font-size: 2rem;
+            margin-top: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 6px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        .progress {
+            background: linear-gradient(90deg, var(--magic-bronze), var(--magic-gold));
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .question {
+            font-size: 1.25rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            display: none;
+        }
+        .question.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .option-btn {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            color: #cbd5e1;
+            padding: 14px 18px;
+            margin: 10px 0;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+            text-align: left;
+            box-sizing: border-box;
+        }
+        .option-btn:hover {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(205, 127, 50, 0.15));
+            border-color: var(--magic-gold);
+            color: #fff;
+            transform: translateX(4px);
+        }
+        #result-screen {
+            display: none;
+            animation: fadeIn 0.6s ease;
+        }
+        .wand-box {
+            border: 2px double var(--magic-gold);
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 12px;
+            background-color: rgba(13, 15, 20, 0.8);
+            box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.1);
+        }
+        .wand-title {
+            font-size: 1.9rem;
+            color: var(--magic-gold);
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .spec-item {
+            margin: 8px 0;
+            font-size: 1.1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 6px;
+        }
+        .spec-item strong {
+            color: var(--magic-gold);
+        }
+        .wand-desc {
+            margin-top: 20px;
+            font-style: italic;
+            color: #94a3b8;
+            line-height: 1.6;
+            text-align: justify;
+        }
+        .restart-btn {
+            background-color: transparent;
+            border: 1px solid var(--magic-gold);
+            color: var(--magic-gold);
+            padding: 12px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        .restart-btn:hover {
+            background-color: var(--magic-gold);
+            color: var(--dark-bg);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="quiz-container">
+    <h1>Ollivanders Wand Selection</h1>
+    <div class="progress-bar"><div class="progress" id="progress"></div></div>
+    <div id="quiz-flow"></div>
+    <div id="result-screen">
+        <h2>La Bacchetta ti ha Scelto</h2>
+        <div class="wand-box">
+            <div class="wand-title" id="res-wood">Legno</div>
+            <div class="spec-item"><strong>Nucleo:</strong> <span id="res-core"></span></div>
+            <div class="spec-item"><strong>Lunghezza:</strong> <span id="res-length"></span></div>
+            <div class="spec-item"><strong>Flessibilità:</strong> <span id="res-flex"></span></div>
+            <div class="wand-desc" id="res-desc">Descrizione...</div>
+        </div>
+        <button class="restart-btn" onclick="restartQuiz()">Ricomincia il Rituale</button>
+    </div>
+</div>
+<script>
+    const questionsData = [
+        {
+            q: "In una notte buia nella Foresta Proibita, avverti un rumore improvviso alle tue spalle. Qual è il tuo istinto primordiale?",
+            opts: [
+                { t: "Impugno subito la bacchetta pronto a scagliare una maledizione offensiva.", traits: { power: 3, courage: 2, darkness: 3, stability: -1 } },
+                { t: "Mi immobilizzo, mi fondo con le ombre e analizzo la traiettoria del suono.", traits: { wisdom: 3, adaptability: 2, stealth: 3 } },
+                { t: "Evoco istantaneamente una barriera di protezione luminosa attorno a me.", traits: { protection: 3, justice: 2, stability: 2 } },
+                { t: "Mi volto cercando di capire se si tratta di una creatura ferita che ha bisogno di aiuto.", traits: { empathy: 4, nature: 3, justice: 1 } }
+            ]
+        },
+        {
+            q: "Se potessi scegliere una dote innata da padroneggiare senza alcuno sforzo, quale preferiresti?",
+            opts: [
+                { t: "La capacità di leggere e manipolare i pensieri altrui (Legilimanzia).", traits: { darkness: 2, wisdom: 2, stealth: 2 } },
+                { t: "Il controllo assoluto sugli elementi naturali (Fuoco, Aria, Terra, Acqua).", traits: { nature: 4, power: 2 } },
+                { t: "Un'abilità insuperabile nei duelli veloci e nei riflessi magici.", traits: { power: 2, courage: 3, adaptability: 1 } },
+                { t: "L'arte di guarire qualsiasi ferita, maledizione o veleno noto.", traits: { empathy: 3, protection: 3, justice: 2 } }
+            ]
+        },
+        {
+            q: "Davanti dello Specchio delle Brame, cosa vedresti riflesso nel tuo futuro ideale?",
+            opts: [
+                { t: "Me stesso circondato da segreti svelati e antichi libri mai letti da nessuno.", traits: { wisdom: 4, stability: 1 } },
+                { t: "Il riconoscimento globale, il comando e il rispetto da parte di tutti.", traits: { power: 4, darkness: 1 } },
+                { t: "Una vita serena, circondato solo dalle persone che amo al sicuro dai pericoli.", traits: { empathy: 3, protection: 2, justice: 2 } },
+                { t: "Un'avventura senza fine oltre i confini del mondo magico conosciuto.", traits: { adaptability: 4, courage: 2 } }
+            ]
+        },
+        {
+            q: "Quale difetto caratteriale i tuoi nemici (o amici) tendono a criticare più spesso in te?",
+            opts: [
+                { t: "L'ostinazione: quando prendo una decisione non cambio idea per niente al mondo.", traits: { stability: 4, pride: 2 } },
+                { t: "L'imprevedibilità: cambio umore o piani troppo velocemente.", traits: { adaptability: 4, stability: -2 } },
+                { t: "L'orgoglio: fatico ad ammettere i miei errori o a chiedere scusa.", traits: { pride: 3, power: 1 } },
+                { t: "La tendenza a sacrificarmi troppo anche per chi forse non lo merita.", traits: { empathy: 3, justice: 2 } }
+            ]
+        },
+        {
+            q: "Ti viene affidato un antico manufatto magico pericoloso. Come decidi di custodirlo?",
+            opts: [
+                { t: "Lo nascondo sotto incantesimi protettivi che solo io posso sciogliere.", traits: { protection: 3, stealth: 2 } },
+                { t: "Lo studio giorno e notte per capire come sfruttare il suo potere in sicurezza.", traits: { wisdom: 3, power: 1 } },
+                { t: "Lo consegno alle autorità magiche affinché venga distrutto o sigillato.", traits: { justice: 4, stability: 2 } }
+            ]
+        },
+        {
+            q: "Quale animale spettrale o magico ti affascina di più per la sua natura intrinseca?",
+            opts: [
+                { t: "Il Thestral, invisibile ai più, legato ai misteri della transizione.", traits: { darkness: 3, wisdom: 2 } },
+                { t: "La Fenice, pura, fiera e immobile nel suo ciclo di rinascita.", traits: { courage: 3, justice: 2 } },
+                { t: "Il Drago, indomabile, fiero e dotato di una forza distruttiva innata.", traits: { power: 3, pride: 2 } }
+            ]
+        }
+    ];
+    let currentQ = 0;
+    let userTraits = {
+        power: 0, courage: 0, darkness: 0, wisdom: 0, adaptability: 0, 
+        stealth: 0, protection: 0, justice: 0, empathy: 0, nature: 0, stability: 0, pride: 0
+    };
+    function initQuiz() {
+        const container = document.getElementById('quiz-flow');
+        container.innerHTML = '';
+        questionsData.forEach((qData, index) => {
+            let qDiv = document.createElement('div');
+            qDiv.className = `question ${index === 0 ? 'active' : ''}`;
+            qDiv.id = `quest-${index}`;
+            let p = document.createElement('p');
+            p.innerText = qData.q;
+            qDiv.appendChild(p);
+            qData.opts.forEach(opt => {
+                let btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt.t;
+                btn.onclick = () => handleAnswer(index, opt.traits);
+                qDiv.appendChild(btn);
+            });
+            container.appendChild(qDiv);
+        });
+        updateProgress();
+    }
+    function handleAnswer(index, traits) {
+        for (let t in traits) {
+            if (userTraits.hasOwnProperty(t)) userTraits[t] += traits[t];
+        }
+        document.getElementById(`quest-${index}`).classList.remove('active');
+        currentQ++;
+        if (currentQ < questionsData.length) {
+            document.getElementById(`quest-${currentQ}`).classList.add('active');
+            updateProgress();
+        } else {
+            document.getElementById('progress').style.width = '100%';
+            processWandRigorous();
+        }
+    }
+    function updateProgress() {
+        let percent = (currentQ / questionsData.length) * 100;
+        document.getElementById('progress').style.width = percent + '%';
+    }
+    function processWandRigorous() {
+        document.getElementById('quiz-flow').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        let legno = ""; let nucleo = ""; let lunghezza = ""; let flessibilita = ""; let desc = "";
+        let coreScores = {
+            'Corda di Cuore di Drago': userTraits.power * 1.5 + userTraits.pride + userTraits.darkness,
+            'Piuma di Fenice': userTraits.courage * 1.5 + userTraits.adaptability + (userTraits.wisdom * 0.5),
+            'Crine di Unicorno': userTraits.empathy * 1.5 + userTraits.justice + userTraits.protection
+        };
+        nucleo = Object.keys(coreScores).reduce((a, b) => coreScores[a] > coreScores[b] ? a : b);
+        if (userTraits.darkness >= 4 && userTraits.power >= 3) {
+            legno = "Tasso (Yew)";
+            desc = "Il Tasso è un legno d'eccezione, noto per non scegliere mai un mago mediocre. Ha una fama oscura legata ai duelli mortali, ma è altrettanto potente nella magia difensiva.";
+        } else if (userTraits.courage >= 4 && userTraits.protection >= 3) {
+            legno = "Agrifoglio (Holly)";
+            desc = "L'Agrifoglio possiede una natura spiccatamente protettiva e sceglie maghi coinvolti in imprese pericolose. Agisce in perfetta armonia con chi combatte l'oscurità.";
+        } else if (userTraits.wisdom >= 4 && userTraits.stealth >= 2) {
+            legno = "Vite (Vine)";
+            desc = "La Vite predilige menti profonde, complesse e stratificate. Sceglie streghe o maghi che nascondono scopi nobili o ambizioni grandiose sotto un velo di apparente distacco.";
+        } else if (userTraits.nature >= 4 || userTraits.empathy >= 4) {
+            legno = "Salice (Willow)";
+            desc = "Il Salice è un legno dall'altissimo potere curativo e sintonizzato con i ritmi della terra. Sceglie individui dotati di una profonda empatia, capaci di magie sbalorditive.";
+        } else if (userTraits.stability >= 4) {
+            legno = "Ebano (Ebony)";
+            desc = "L'Ebano ha un aspetto imponente e una consistenza densa. Questo legno cerca un proprietario incorruttibile, che non si lascia piegare dalle mode o dalle pressioni esterne.";
+        } else if (userTraits.adaptability >= 4) {
+            legno = "Biancospino (Hawthorn)";
+            desc = "Il Biancospino genera bacchette contraddittorie e complesse, specchio di anime in costante adattamento emotivo. Sceglie chi vive grandi conflitti interiori.";
+        } else {
+            legno = "Abete (Fir)";
+            desc = "L'Abete esige determinazione e fermezza d'animo. Conosciuta come la bacchetta dei sopravvissuti, predilige maghi stabili e focalizzati sul superamento dei propri limiti.";
+        }
+        let baseLength = 11.0;
+        if (userTraits.pride > userTraits.empathy) { baseLength += (userTraits.pride * 0.25); } 
+        else { baseLength -= (userTraits.empathy * 0.15); }
+        baseLength = Math.max(9.25, Math.min(14.0, baseLength));
+        let interi = Math.floor(baseLength); let decimali = baseLength - interi; let frazione = "";
+        if (decimali >= 0.1 && decimali < 0.4) frazione = " e un quarto";
+        else if (decimali >= 0.4 && decimali < 0.6) frazione = " e mezzo";
+        else if (decimali >= 0.6 && decimali < 0.9) frazione = " e tre quarti";
+        lunghezza = `${interi}${frazione} pollici`;
+        let flexDelta = userTraits.adaptability - userTraits.stability;
+        if (flexDelta > 3) flessibilita = "Estremamente Flessibile (Whippy)";
+        else if (flexDelta > 1) flessibilita = "Flessibile ed Elastica";
+        else if (flexDelta >= -1) flessibilita = "Ragionevolmente Duttile";
+        else if (flexDelta >= -3) flessibilita = "Rigida e Decisa";
+        else flessibilita = "Incurvabile (Unyielding)";
+        document.getElementById('res-wood').innerText = `Bacchetta in Legno di ${legno}`;
+        document.getElementById('res-core').innerText = nucleo;
+        document.getElementById('res-length').innerText = lunghezza;
+        document.getElementById('res-flex').innerText = flessibilita;
+        document.getElementById('res-desc').innerText = desc;
+    }
+    function restartQuiz() {
+        currentQ = 0;
+        userTraits = { power: 0, courage: 0, darkness: 0, wisdom: 0, adaptability: 0, stealth: 0, protection: 0, justice: 0, empathy: 0, nature: 0, stability: 0, pride: 0 };
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-flow').style.display = 'block';
+        initQuiz();
+    }
+    window.onload = initQuiz;
+</script>
+</body>
+</html>
